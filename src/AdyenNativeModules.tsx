@@ -10,6 +10,7 @@ import {
   PaymentAction,
   PaymentMethod,
   PaymentMethodsResponse,
+  StoredPaymentMethod,
 } from './Core/types';
 
 /** Options of dismissing the payment component */
@@ -151,6 +152,7 @@ export function getNativeComponent(
 ): {
   nativeComponent: AdyenActionComponent & NativeModule;
   paymentMethod: PaymentMethod | undefined;
+  storedMethod: StoredPaymentMethod | undefined;
 } {
   const type = typeName.toLowerCase();
   switch (type) {
@@ -160,20 +162,34 @@ export function getNativeComponent(
       return {
         nativeComponent: new AdyenNativeComponentWrapper(AdyenDropIn),
         paymentMethod: undefined,
+        storedMethod: undefined,
       };
     case 'applepay':
       return {
         nativeComponent: new AdyenNativeComponentWrapper(AdyenApplePay, false),
         paymentMethod: undefined,
+        storedMethod: undefined,
       };
     case 'paywithgoogle':
     case 'googlepay':
       return {
         nativeComponent: new AdyenNativeComponentWrapper(AdyenGooglePay, false),
         paymentMethod: undefined,
+        storedMethod: undefined,
       };
     default:
       break;
+  }
+
+  const stored = paymentMethods.storedPaymentMethods?.find(
+    (element) => element.id.toLowerCase() == type
+  );
+  if (stored) {
+    return {
+      nativeComponent: new AdyenNativeComponentWrapper(AdyenDropIn),
+      paymentMethod: undefined,
+      storedMethod: stored,
+    };
   }
 
   const paymentMethod = find(paymentMethods, type);
@@ -185,11 +201,13 @@ export function getNativeComponent(
     return {
       nativeComponent: new AdyenNativeComponentWrapper(AdyenDropIn),
       paymentMethod: paymentMethod,
+      storedMethod: undefined,
     };
   }
 
   return {
     nativeComponent: new AdyenNativeComponentWrapper(AdyenInstant),
     paymentMethod: paymentMethod,
+    storedMethod: undefined,
   };
 }

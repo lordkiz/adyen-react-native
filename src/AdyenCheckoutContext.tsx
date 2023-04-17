@@ -123,10 +123,8 @@ const AdyenCheckout: React.FC<AdyenCheckoutProps> = ({
   const start = useCallback(
     (typeName: string) => {
       removeEventListeners();
-      const { nativeComponent, paymentMethod } = getNativeComponent(
-        typeName,
-        paymentMethods
-      );
+      const { nativeComponent, paymentMethod, storedMethod } =
+        getNativeComponent(typeName, paymentMethods);
 
       checkPaymentMethodsResponse(paymentMethods);
       checkConfiguration(config);
@@ -135,6 +133,16 @@ const AdyenCheckout: React.FC<AdyenCheckoutProps> = ({
 
       if (paymentMethod) {
         const singlePaymentMethods = { paymentMethods: [paymentMethod] };
+        const singlePaymentConfig = {
+          ...config,
+          dropin: { skipListWhenSinglePaymentMethod: true },
+        };
+        nativeComponent.open(singlePaymentMethods, singlePaymentConfig);
+      } else if (storedMethod) {
+        const singlePaymentMethods = {
+          storedPaymentMethods: [storedMethod],
+          paymentMethods: [],
+        };
         const singlePaymentConfig = {
           ...config,
           dropin: { skipListWhenSinglePaymentMethod: true },

@@ -3,8 +3,27 @@
 import React, { useCallback } from 'react';
 // @ts-ignore
 import { useAdyenCheckout } from '@adyen/react-native';
-import { Button, View, Platform } from 'react-native';
+import { Button, Text, View, Platform, TouchableOpacity } from 'react-native';
 import Styles from '../../Utilities/Styles';
+
+const StoredPaymentView = (props) => {
+  const {
+    /** @type {import('../../../..').StoredPaymentMethod} */ storedPayment,
+    onPress,
+    disabled,
+  } = props;
+
+  return (
+    <TouchableOpacity onPress={onPress} disabled={disabled}>
+      <View>
+        <Text>{storedPayment.name}</Text>
+        <Text>
+          {Object(storedPayment)?.lastFour ?? Object(storedPayment)?.iban ?? ''}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const PaymentMethods = () => {
   const { start, paymentMethods: paymentMethodsResponse } = useAdyenCheckout();
@@ -31,6 +50,14 @@ const PaymentMethods = () => {
 
   const isNotReady = paymentMethodsResponse == undefined;
 
+  const getStored = (
+    /** @type {import('../../../..').PaymentMethodsResponse} */ pms
+  ) => {
+    return pms?.storedPaymentMethods?.find((e) => e);
+  };
+
+  const stored = getStored(paymentMethodsResponse);
+
   return (
     <View style={[Styles.content]}>
       <Button
@@ -40,6 +67,18 @@ const PaymentMethods = () => {
           start('dropin');
         }}
       />
+      {stored ? (
+        <StoredPaymentView
+          storedPayment={stored}
+          disabled={isNotReady || !isAvailable(platformSpecificType)}
+          onPress={() => {
+            start(stored.id);
+          }}
+        />
+      ) : (
+        <View />
+      )}
+
       <Button
         title="Open Card Component"
         disabled={isNotReady}

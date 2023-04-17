@@ -168,6 +168,13 @@ export interface StoredPaymentMethod extends PaymentMethod {
   id: string;
 }
 
+export interface StoredCardPaymentMethod extends StoredPaymentMethod {
+  /**
+   * A unique identifier of this stored payment method.
+   */
+  lastFour: string;
+}
+
 /**
  * List of the available payment methods
  * {@link https://docs.adyen.com/api-explorer/#/PaymentSetupAndVerificationService/v51/paymentMethods API Explorer /paymentMethods}.
