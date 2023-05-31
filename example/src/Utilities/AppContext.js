@@ -4,7 +4,7 @@ import React, { useContext, useState, useMemo, createContext } from 'react';
 import ApiClient from './APIClient';
 
 export const AppContext = createContext({
-  configuration: undefined,
+  configuration: {},
   paymentMethods: undefined,
   refreshPaymentMethods: (configuration) => {},
 });
