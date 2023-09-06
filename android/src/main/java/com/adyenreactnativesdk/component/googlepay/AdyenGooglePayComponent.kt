@@ -22,7 +22,7 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import org.json.JSONException
 
-class AdyenGooglePayComponent(context: ReactApplicationContext?) : BaseModule(context) {
+class AdyenGooglePayComponent(context: ReactApplicationContext?) : AdyenInstantComponent(context) {
 
     private var googlePayComponent: GooglePayComponent? = null
     private var pendingPaymentDialogFragment: PendingPaymentDialogFragment? = null
@@ -106,10 +106,18 @@ class AdyenGooglePayComponent(context: ReactApplicationContext?) : BaseModule(co
                 GOOGLEPAY_REQUEST_CODE
             )
 
+            val actionHandlerConfiguration = ActionHandlerConfiguration(shopperLocale, environment, clientKey)
+            actionHandler = ActionHandler(this, actionHandlerConfiguration)
+
             AdyenCheckout.setGooglePayComponent(this)
             pendingPaymentDialogFragment = dialogFragment
             googlePayComponent = component
         }
+    }
+
+    @ReactMethod
+    fun handle(actionMap: ReadableMap?) {
+        super.handle(actionMap)
     }
 
     @ReactMethod
@@ -122,6 +130,7 @@ class AdyenGooglePayComponent(context: ReactApplicationContext?) : BaseModule(co
             pendingPaymentDialogFragment?.dismiss()
             pendingPaymentDialogFragment = null
             googlePayComponent = null
+            actionHandler = null
         }
         AdyenCheckout.removeGooglePayComponent()
     }

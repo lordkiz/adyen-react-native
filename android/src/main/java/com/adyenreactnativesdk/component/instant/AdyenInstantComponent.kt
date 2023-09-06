@@ -21,7 +21,7 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import org.json.JSONException
 
-class AdyenInstantComponent(context: ReactApplicationContext?) : BaseModule(context),
+class AdyenInstantComponent(context: ReactApplicationContext?) : ActionHandlingModule(context),
     PaymentComponentListener, ActionHandlingInterface {
 
     override fun getName(): String {
@@ -65,13 +65,7 @@ class AdyenInstantComponent(context: ReactApplicationContext?) : BaseModule(cont
 
     @ReactMethod
     fun handle(actionMap: ReadableMap?) {
-        try {
-            val jsonObject = ReactNativeJson.convertMapToJson(actionMap)
-            val action = Action.SERIALIZER.deserialize(jsonObject)
-            actionHandler?.handleAction(appCompatActivity, action)
-        } catch (e: JSONException) {
-            sendErrorEvent(BaseModuleException.InvalidAction(e))
-        }
+        super.handle(actionMap)
     }
 
     @ReactMethod

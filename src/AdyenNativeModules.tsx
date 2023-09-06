@@ -114,7 +114,7 @@ export const AdyenApplePay: AdyenComponent & NativeModule =
       );
 
 /** Google Pay component (only available for Android) */
-export const AdyenGooglePay: AdyenComponent & NativeModule =
+export const AdyenGooglePay: AdyenActionComponent & NativeModule =
   NativeModules.AdyenGooglePay
     ? NativeModules.AdyenGooglePay
     : new Proxy(
