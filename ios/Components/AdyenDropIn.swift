@@ -35,7 +35,7 @@ final internal class AdyenDropIn: BaseModule {
             return sendEvent(error: error)
         }
 
-        let apiContext = APIContext(environment: parser.environment, clientKey: clientKey)
+        let apiContext = try! APIContext(environment: parser.environment, clientKey: clientKey)
 
         let config = DropInConfigurationParser(configuration: configuration).configuration(apiContext: apiContext)
         config.card = CardConfigurationParser(configuration: configuration).configuration

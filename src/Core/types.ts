@@ -207,3 +207,86 @@ export interface PaymentMethodData {
     userAgent: string;
   };
 }
+
+export interface AdyenSessionRequestParams {
+  amount: {
+    currency: string;
+    value: number;
+  };
+
+  merchantAccount: string;
+
+  reference: string;
+
+  returnUrl: string;
+}
+
+type Address = {
+  city: string;
+  country: string;
+  houseNumberOrName: string;
+  postalCode: string;
+  street: string;
+};
+
+type LineItem = {
+  amountExcludingTax: number;
+  amountIncludingTax: number;
+
+  brand: string;
+
+  color: string;
+
+  description: string;
+
+  id: string;
+  imageUrl: string;
+
+  itemCategory: string;
+
+  manufacturer: string;
+
+  productUrl: string;
+
+  quantity: number;
+
+  receiverEmail: string;
+
+  size: string;
+
+  sku: string;
+
+  taxAmount: number;
+
+  taxPercentage: number;
+
+  upc: string;
+};
+
+export interface AdyenSessionResponse {
+  amount: {
+    currency: string;
+    value: number;
+  };
+  billingAddress?: Address;
+  countryCode: string;
+  dateOfBirth?: string;
+  deliveryAddress?: Address;
+  expiresAt: string;
+  id: string;
+  lineItems?: [LineItem];
+  merchantAccount: string;
+  reference: string;
+  returnUrl: string;
+  shopperEmail?: string;
+  shopperLocale?: string;
+  shopperName?: {
+    firstName?: string;
+    gender?: string;
+    lastName?: string;
+  };
+  shopperReference?: string;
+  socialSecurityNumber?: string;
+  telephoneNumber?: string;
+  sessionData: string;
+}
