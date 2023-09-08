@@ -18,8 +18,6 @@ public struct ApplepayConfigurationParser {
         }
         if let configurationNode = configuration[ApplePayKeys.rootKey] as? [String: Any] {
             self.dict = configurationNode
-        } else {
-            self.dict = configuration
         }
     }
 

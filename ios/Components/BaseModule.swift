@@ -24,6 +24,7 @@ internal class BaseModule: RCTEventEmitter {
     override func startObserving() { /* No JS events expected */ }
     override open func supportedEvents() -> [String]! { Events.allCases.map(\.rawValue) }
 
+    internal var currentSession: AdyenSession?
     internal var currentComponent: Component?
     internal var currentPaymentComponent: PaymentComponent? {
         currentComponent as? PaymentComponent

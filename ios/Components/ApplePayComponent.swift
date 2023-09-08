@@ -21,7 +21,7 @@ final internal class ApplePayComponent: BaseModule {
     }
 
     @objc
-    func open(_ paymentMethodsDict: NSDictionary, configuration: NSDictionary) {
+    func open(_ configuration: NSDictionary) {
         let parser = RootConfigurationParser(configuration: configuration)
         let applePayParser = ApplepayConfigurationParser(configuration: configuration)
         let paymentMethod: ApplePayPaymentMethod

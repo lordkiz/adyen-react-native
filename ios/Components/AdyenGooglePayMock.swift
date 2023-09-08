@@ -14,7 +14,7 @@ internal class AdyenGooglePayMock: BaseModule {
     override func supportedEvents() -> [String]! { [Events.didFail.rawValue] }
     
     @objc
-    func open(_ paymentMethodsDict: NSDictionary, configuration: NSDictionary) {
+    func open(_ configuration: NSDictionary) {
         return sendEvent(error: NativeModuleError.notSupported)
     }
 }

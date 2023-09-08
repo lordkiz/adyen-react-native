@@ -58,3 +58,20 @@ internal enum ApplePayKeys: SubConfig {
 internal enum StyleKeys: SubConfig {
     static var rootKey = "style"
 }
+
+internal enum AmountKeys {
+    case currency
+    case value
+}
+
+internal enum SessionKeys: SubConfig {
+  static var rootKey = "session"
+  static var amount = AmountKeys 
+  static var countryCode = "countryCode" 
+  static var expiresAt = "expiresAt" 
+  static var id = "id" 
+  static var merchantAccount = "merchantAccount"
+  static var reference = "reference" 
+  static var returnUrl = "returnUrl" 
+  static var sessionData = "sessionData" 
+}

@@ -17,6 +17,10 @@ final internal class AdyenDropIn: BaseModule {
     private var dropInComponent: DropInComponent? {
         currentComponent as? DropInComponent
     }
+
+    private var session: AdyenSession? {
+        currentSession as? AdyenSession
+    }
     
     @objc
     func hide(_ success: NSNumber, event: NSDictionary) {
@@ -24,35 +28,52 @@ final internal class AdyenDropIn: BaseModule {
     }
 
     @objc
-    func open(_ paymentMethodsDict: NSDictionary, configuration: NSDictionary) {
+    func open(_ configuration: NSDictionary) {
         let parser = RootConfigurationParser(configuration: configuration)
-        let paymentMethods: PaymentMethods
+        let sessionConfigurationParser = SessionConfigurationParser(configuration)
         let clientKey: String
         do {
-            paymentMethods = try parsePaymentMethods(from: paymentMethodsDict)
             clientKey = try fetchClientKey(from: parser)
         } catch {
             return sendEvent(error: error)
         }
 
-        let apiContext = try! APIContext(environment: parser.environment, clientKey: clientKey)
+        let apiContext = APIContext(environment: parser.environment, clientKey: clientKey)
+        let amount = sessionConfigurationParser.amount
+        let payment = Payment(amount: amount, currencyCode: sessionConfigurationParser.countryCode)
 
-        let config = DropInConfigurationParser(configuration: configuration).configuration(apiContext: apiContext)
-        config.card = CardConfigurationParser(configuration: configuration).configuration
+        let adyenContext = AdyenContext(apiContext: apiContext, payment: payment)
 
-        if let payment = parser.payment {
-            config.payment = payment
-            (try? ApplepayConfigurationParser(configuration: configuration).buildConfiguration(amount: payment.amount)).map {
-                config.applePay = $0
-            }
+        let adyenConfiguration = sessionConfigurationParser.configuration(adyenContext)
+
+        AdyenSession.initialize(with: configuration, 
+                                delegate: self, 
+                                presentationDelegate: self) { 
+                                [weak self] result in
+                                    switch result {
+                                    case let .success(session):
+                                        //Store the session object.
+                                        self?.session = session
+                                    case let .failure(error):
+                                        //Handle the error. 
+                                        sendEvent(error)
+                                    }
+        }
+
+        let dropInConfiguration = DropInConfigurationParser(configuration: configuration).configuration(adyenContext: adyenContext)
+        dropInConfiguration.card = CardConfigurationParser(configuration: configuration).configuration
+
+        dropInConfiguration.payment = payment
+        (try? ApplepayConfigurationParser(configuration: configuration).buildConfiguration(amount: payment.amount)).map {
+            dropInConfiguration.applePay = $0
         }
 
         let dropInComponentStyle = AdyenAppearanceLoader.findStyle() ?? DropInComponent.Style()
-        let component = DropInComponent(paymentMethods: paymentMethods,
-                                        configuration: config,
+        let component = DropInComponent(paymentMethods: session.sessionContext.paymentMethods,
+                                        configuration: dropInConfiguration,
                                         style: dropInComponentStyle)
         currentComponent = component
-        component.delegate = self
+        component.delegate = session
         present(component: component)
     }
 
