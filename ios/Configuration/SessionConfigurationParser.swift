@@ -5,19 +5,21 @@ public struct SessionConfigurationParser {
   private var dict: [String:Any]
 
   public init(configuration: NSDictionary) {
-      guard let configuration = configuration as? [String: Any] else {
+      guard let config = configuration as? [String: Any] else {
           self.dict = [:]
           return
       }
-      if let configurationNode = configuration[SessionKeys.rootKey] as? [String: Any] {
+      if let configurationNode = config[SessionKeys.rootKey] as? [String: Any] {
         self.dict = configurationNode
+      } else {
+          self.dict = config
       }
   }
 
   public var amount: Amount? {
-    guard let paymentObject = configuration[.amount] as? SessionKeys.amount,
-          let paymentAmount = paymentObject[SessionKeys.amount.value] as? Int,
-          let currencyCode = paymentObject[SessionKeys.amount.currency] as? String
+      guard let paymentObject = dict[SessionKeys.amount] as? [String: Any],
+          let paymentAmount = paymentObject[AmountKeys.value] as? Int,
+            let currencyCode = paymentObject[AmountKeys.currency] as? String
     else {
         return nil
     }
@@ -25,15 +27,19 @@ public struct SessionConfigurationParser {
     return Amount(value: paymentAmount, currencyCode: currencyCode)
   }
 
-  public var countryCode: String? = {
+  public var countryCode: String? {
     return dict[SessionKeys.countryCode] as? String
   }
 
 
 
-  public func configuration(adyenContext: AdyenContext) -> AdyenSession.Configuration {
-    return .init(sessionIdentifier: dict[SessionKeys.id] as? String ?? .none,
-                 initialSessionData: dict[SessionKeys.sessionData] as? String ?? .none,
-                 adyenContext: adyenContext)
+  public func configuration(adyenContext: AdyenContext) throws -> AdyenSession.Configuration {
+      if (dict[SessionKeys.id] == nil || dict[SessionKeys.sessionData] == nil) {
+          throw NSError(domain: "session", code: 400, userInfo: [ NSLocalizedDescriptionKey: "missing session.id or session.sessionData"])
+      }
+      return .init(sessionIdentifier: dict[SessionKeys.id]! as! String,
+                   initialSessionData: dict[SessionKeys.sessionData]! as! String,
+                   context: adyenContext
+                 )
   }
 }

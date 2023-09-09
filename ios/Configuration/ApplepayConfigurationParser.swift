@@ -18,6 +18,8 @@ public struct ApplepayConfigurationParser {
         }
         if let configurationNode = configuration[ApplePayKeys.rootKey] as? [String: Any] {
             self.dict = configurationNode
+        } else {
+            self.dict = configuration
         }
     }
 
@@ -52,7 +54,7 @@ public struct ApplepayConfigurationParser {
         return summaryItems.isEmpty ? nil : summaryItems
     }
 
-    public func buildConfiguration(amount: Amount) throws -> Adyen.ApplePayComponent.Configuration {
+    public func buildConfiguration(amount: Amount, countryCode: String) throws -> Adyen.ApplePayComponent.Configuration {
         guard let merchantID = merchantID else {
             throw ApplePayError.invalidMerchantID
         }
@@ -71,9 +73,13 @@ public struct ApplepayConfigurationParser {
             summaryItems = [PKPaymentSummaryItem(label: merchantName, amount: amount)]
             
         }
-        return .init(summaryItems: summaryItems,
-                     merchantIdentifier: merchantID,
-                     allowOnboarding: allowOnboarding)
+        
+        let applePayment: ApplePayPayment = try ApplePayPayment(countryCode: countryCode, currencyCode: amount.currencyCode, summaryItems: summaryItems)
+        
+        var config = Adyen.ApplePayComponent.Configuration.init(payment: applePayment,
+                     merchantIdentifier: merchantID)
+        config.allowOnboarding = allowOnboarding
+        return config
     }
 
 }

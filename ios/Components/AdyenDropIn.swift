@@ -17,10 +17,6 @@ final internal class AdyenDropIn: BaseModule {
     private var dropInComponent: DropInComponent? {
         currentComponent as? DropInComponent
     }
-
-    private var session: AdyenSession? {
-        currentSession as? AdyenSession
-    }
     
     @objc
     func hide(_ success: NSNumber, event: NSDictionary) {
@@ -30,7 +26,7 @@ final internal class AdyenDropIn: BaseModule {
     @objc
     func open(_ configuration: NSDictionary) {
         let parser = RootConfigurationParser(configuration: configuration)
-        let sessionConfigurationParser = SessionConfigurationParser(configuration)
+        let sessionConfigurationParser = SessionConfigurationParser(configuration: configuration)
         let clientKey: String
         do {
             clientKey = try fetchClientKey(from: parser)
@@ -38,42 +34,48 @@ final internal class AdyenDropIn: BaseModule {
             return sendEvent(error: error)
         }
 
-        let apiContext = APIContext(environment: parser.environment, clientKey: clientKey)
-        let amount = sessionConfigurationParser.amount
-        let payment = Payment(amount: amount, currencyCode: sessionConfigurationParser.countryCode)
+        let apiContext = try! APIContext(environment: parser.environment, clientKey: clientKey)
+        let amount = sessionConfigurationParser.amount!
+        let payment = Payment(amount: amount, countryCode: sessionConfigurationParser.countryCode!)
 
         let adyenContext = AdyenContext(apiContext: apiContext, payment: payment)
 
-        let adyenConfiguration = sessionConfigurationParser.configuration(adyenContext)
+        let adyenConfiguration = try! sessionConfigurationParser.configuration(adyenContext: adyenContext)
 
-        AdyenSession.initialize(with: configuration, 
+        AdyenSession.initialize(with: adyenConfiguration, 
                                 delegate: self, 
                                 presentationDelegate: self) { 
                                 [weak self] result in
                                     switch result {
                                     case let .success(session):
                                         //Store the session object.
-                                        self?.session = session
+                                        self?.currentSession = session
                                     case let .failure(error):
                                         //Handle the error. 
-                                        sendEvent(error)
+                                        self?.sendEvent(error: error)
                                     }
         }
-
-        let dropInConfiguration = DropInConfigurationParser(configuration: configuration).configuration(adyenContext: adyenContext)
-        dropInConfiguration.card = CardConfigurationParser(configuration: configuration).configuration
-
-        dropInConfiguration.payment = payment
-        (try? ApplepayConfigurationParser(configuration: configuration).buildConfiguration(amount: payment.amount)).map {
-            dropInConfiguration.applePay = $0
+        
+        if (currentSession == nil) {
+            return
         }
 
         let dropInComponentStyle = AdyenAppearanceLoader.findStyle() ?? DropInComponent.Style()
-        let component = DropInComponent(paymentMethods: session.sessionContext.paymentMethods,
-                                        configuration: dropInConfiguration,
-                                        style: dropInComponentStyle)
+        let dropInConfiguration = DropInConfigurationParser(configuration: configuration).configuration()
+        dropInConfiguration.style = dropInComponentStyle
+        // config for cards
+        dropInConfiguration.card = CardConfigurationParser(configuration: configuration).configuration
+        // config for applepay
+        (try? ApplepayConfigurationParser(configuration: configuration).buildConfiguration(amount: payment.amount, countryCode: sessionConfigurationParser.countryCode!)).map {
+            dropInConfiguration.applePay = $0
+        }
+
+        let component = DropInComponent(paymentMethods: currentSession!.sessionContext.paymentMethods,
+                                        context: adyenContext,
+                                        configuration: dropInConfiguration
+                                        )
         currentComponent = component
-        component.delegate = session
+        component.delegate = currentSession
         present(component: component)
     }
 
@@ -94,23 +96,39 @@ final internal class AdyenDropIn: BaseModule {
 }
 
 extension AdyenDropIn: DropInComponentDelegate {
-
-    func didSubmit(_ data: PaymentComponentData,
-                   for paymentMethod: PaymentMethod,
-                   from component: DropInComponent) {
+    func didSubmit(_ data: Adyen.PaymentComponentData, from component: Adyen.PaymentComponent, in dropInComponent: Adyen.AnyDropInComponent) {
         sendEvent(event: .didSubmit, body: data.jsonObject)
     }
-
-    func didProvide(_ data: ActionComponentData, from component: DropInComponent) {
+    
+    func didFail(with error: Error, from component: Adyen.PaymentComponent, in dropInComponent: Adyen.AnyDropInComponent) {
+        sendEvent(error: error)
+    }
+    
+    func didProvide(_ data: Adyen.ActionComponentData, from component: Adyen.ActionComponent, in dropInComponent: Adyen.AnyDropInComponent) {
         sendEvent(event: .didProvide, body: data.jsonObject)
     }
-
-    func didComplete(from component: DropInComponent) {
+    
+    func didComplete(from component: Adyen.ActionComponent, in dropInComponent: Adyen.AnyDropInComponent) {
         sendEvent(event: .didComplete, body: nil)
     }
-
-    func didFail(with error: Error, from component: DropInComponent) {
+    
+    func didFail(with error: Error, from component: Adyen.ActionComponent, in dropInComponent: Adyen.AnyDropInComponent) {
+        sendEvent(error: error)
+    }
+    
+    func didFail(with error: Error, from dropInComponent: Adyen.AnyDropInComponent) {
         sendEvent(error: error)
     }
 
+}
+
+extension AdyenDropIn: AdyenSessionDelegate {
+    func didComplete(with resultCode: Adyen.SessionPaymentResultCode, component: Adyen.Component, session: Adyen.AdyenSession) {
+        sendEvent(event: .didComplete, body: nil)
+    }
+    
+    func didFail(with error: Error, from component: Adyen.Component, session: Adyen.AdyenSession) {
+        sendEvent(error: error)
+    }
+    
 }

@@ -60,13 +60,13 @@ internal enum StyleKeys: SubConfig {
 }
 
 internal enum AmountKeys {
-    case currency
-    case value
+  static var currency = "currency"
+  static var value = "value" 
 }
 
 internal enum SessionKeys: SubConfig {
   static var rootKey = "session"
-  static var amount = AmountKeys 
+  static var amount = "amount"
   static var countryCode = "countryCode" 
   static var expiresAt = "expiresAt" 
   static var id = "id" 

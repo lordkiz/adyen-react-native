@@ -87,19 +87,6 @@ export const AdyenDropIn: AdyenActionComponent & NativeModule =
         }
       );
 
-/** Generic Redirect component */
-export const AdyenInstant: AdyenActionComponent & NativeModule =
-  NativeModules.AdyenInstant
-    ? NativeModules.AdyenInstant
-    : new Proxy(
-        {},
-        {
-          get() {
-            throw new Error(LINKING_ERROR);
-          },
-        }
-      );
-
 /** Apple Pay component (only available for iOS) */
 export const AdyenApplePay: AdyenComponent & NativeModule =
   NativeModules.AdyenApplePay
@@ -196,8 +183,5 @@ export function getNativeComponent(
     };
   }
 
-  return {
-    nativeComponent: new AdyenNativeComponentWrapper(AdyenInstant),
-    paymentMethod: paymentMethod,
-  };
+  throw new Error(UNSUPPORTED_PAYMENT_METHOD_ERROR + typeName);
 }

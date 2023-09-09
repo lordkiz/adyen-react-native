@@ -23,33 +23,68 @@ final internal class ApplePayComponent: BaseModule {
     @objc
     func open(_ configuration: NSDictionary) {
         let parser = RootConfigurationParser(configuration: configuration)
-        let applePayParser = ApplepayConfigurationParser(configuration: configuration)
-        let paymentMethod: ApplePayPaymentMethod
+        let sessionConfigurationParser = SessionConfigurationParser(configuration: configuration)
         let clientKey: String
-        let payment: Payment
-        let applepayConfig: Adyen.ApplePayComponent.Configuration
         do {
-            paymentMethod = try parsePaymentMethod(from: paymentMethodsDict, for: ApplePayPaymentMethod.self)
             clientKey = try fetchClientKey(from: parser)
-            payment = try fetchPayment(from: parser)
-            applepayConfig = try applePayParser.buildConfiguration(amount: payment.amount)
         } catch {
             return sendEvent(error: error)
         }
         
 
-        let apiContext = APIContext(environment: parser.environment, clientKey: clientKey)
-        let applePayComponent: Adyen.ApplePayComponent
+        let apiContext = try! APIContext(environment: parser.environment, clientKey: clientKey)
+        let amount = sessionConfigurationParser.amount!
+        let payment = Payment(amount: amount, countryCode: sessionConfigurationParser.countryCode!)
+
+        let adyenContext = AdyenContext(apiContext: apiContext, payment: payment)
+
+        let adyenConfiguration: AdyenSession.Configuration
         do {
-            applePayComponent = try Adyen.ApplePayComponent(paymentMethod: paymentMethod,
-                                                        apiContext: apiContext,
-                                                        payment: payment,
-                                                        configuration: applepayConfig)
+            adyenConfiguration = try sessionConfigurationParser.configuration(adyenContext: adyenContext)
         } catch {
             return sendEvent(error: error)
         }
 
-        present(component: applePayComponent)
+        AdyenSession.initialize(with: adyenConfiguration,
+                                delegate: self,
+                                presentationDelegate: self) {
+                                [weak self] result in
+                                    switch result {
+                                    case let .success(session):
+                                        //Store the session object.
+                                        self?.currentSession = session
+                                    case let .failure(error):
+                                        //Handle the error.
+                                        self?.sendEvent(error: error)
+                                    }
+        }
+        
+        if (currentSession == nil) {
+            return
+        }
+        
+        guard let paymentMethods = self.currentSession?.sessionContext.paymentMethods,
+              let paymentMethod = paymentMethods.paymentMethod(ofType: ApplePayPaymentMethod.self) else {
+            return sendEvent(error: NSError(domain: "applepay", code: 400, userInfo: [NSLocalizedDescriptionKey: "missing apple pay payment method"]))
+        }
+         
+        
+        let applePayConfiguration: Adyen.ApplePayComponent.Configuration
+        do { applePayConfiguration = try ApplepayConfigurationParser(configuration: configuration).buildConfiguration(amount: payment.amount, countryCode: sessionConfigurationParser.countryCode!)
+        } catch {
+            return sendEvent(error: error)
+        }
+
+        let component: Adyen.ApplePayComponent
+        do {
+            component = try Adyen.ApplePayComponent(paymentMethod: paymentMethod, context: adyenContext, configuration: applePayConfiguration)
+        } catch {
+            return sendEvent(error: error)
+        }
+        currentComponent = component
+        component.delegate = currentSession
+        present(component: component)
+        
     }
 
 }
@@ -64,4 +99,14 @@ extension ApplePayComponent: PaymentComponentDelegate {
         sendEvent(error: error)
     }
 
+}
+
+extension ApplePayComponent: AdyenSessionDelegate {
+    func didComplete(with resultCode: Adyen.SessionPaymentResultCode, component: Adyen.Component, session: Adyen.AdyenSession) {
+        sendEvent(event: .didComplete, body: nil)
+    }
+    
+    func didFail(with error: Error, from component: Adyen.Component, session: Adyen.AdyenSession) {
+        sendEvent(error: error)
+    }
 }

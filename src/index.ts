@@ -13,7 +13,6 @@ export {
 export {
   AdyenDropIn,
   AdyenApplePay,
-  AdyenInstant,
   AdyenGooglePay,
   AdyenCSE,
   AdyenComponent,

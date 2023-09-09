@@ -70,7 +70,7 @@ public struct CardConfigurationParser {
     
     // TODO: add installmentConfiguration: InstallmentConfiguration?
     
-    public var configuration: CardComponent.Configuration {
+    public var configuration: DropInComponent.Card {
         var storedConfiguration = StoredCardConfiguration()
         storedConfiguration.showsSecurityCodeField = showsStoredSecurityCodeField
 
@@ -79,7 +79,6 @@ public struct CardConfigurationParser {
                       showsSecurityCodeField: showsSecurityCodeField,
                       koreanAuthenticationMode: kcpVisibility,
                       socialSecurityNumberMode: socialSecurityVisibility,
-                      billingAddressMode: addressVisibility,
                       storedCardConfiguration: storedConfiguration,
                       allowedCardTypes: allowedCardTypes)
     }
