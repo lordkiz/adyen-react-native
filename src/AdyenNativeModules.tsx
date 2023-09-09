@@ -26,7 +26,7 @@ export interface HideOption {
 /** Universal interface for Adyen Native payment component */
 export interface AdyenComponent {
   /** Show component above current screen. */
-  open: (paymentMethods: PaymentMethodsResponse, configuration: any) => void;
+  open: (configuration: any) => void;
 
   /** Dismiss component from screen. */
   hide: (success: boolean, option?: HideOption) => void;
@@ -62,8 +62,8 @@ class AdyenNativeComponentWrapper implements AdyenActionComponent {
       throw Error(ErrorCode.notSupportedAction);
     }
   }
-  open(paymentMethods: PaymentMethodsResponse, configuration: any) {
-    this.nativeModule.open(paymentMethods, configuration);
+  open(configuration: any) {
+    this.nativeModule.open(configuration);
   }
   hide(success: boolean, option?: { message?: string }) {
     if (option != null && option.message != null) {
