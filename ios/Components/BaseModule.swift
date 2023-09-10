@@ -134,7 +134,7 @@ internal class BaseModule: RCTEventEmitter {
     }
     
     internal func cleanUp() {
-        actionHandler?.currentActionComponent?.cancelIfNeeded()
+//        actionHandler?.currentActionComponent?.cancelIfNeeded()
         actionHandler = nil
         currentComponent = nil
         

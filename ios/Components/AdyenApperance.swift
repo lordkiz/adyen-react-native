@@ -29,7 +29,6 @@ internal class AdyenAppearanceLoader: NSObject {
             .compactMap { $0 as? AdyenAppearanceProvider.Type }
         
         guard let appearanceProvider = appearanceProviders.first else {
-            adyenPrint("AdyenAppearance: class not linked or does not conform to AdyenAppearanceProvider protocol")
             return nil
         }
         return appearanceProvider.createStyle()

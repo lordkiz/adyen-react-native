@@ -32,15 +32,22 @@ final internal class InstantComponent: BaseModule {
             return sendEvent(error: error)
         }
 
-        let apiContext = APIContext(environment: parser.environment, clientKey: clientKey)
+        let apiContext: APIContext
+        do {
+            apiContext = try APIContext(environment: parser.environment, clientKey: clientKey)
+        } catch {
+            return sendEvent(error: error)
+        }
+        
+        let adyenContext = AdyenContext(apiContext: apiContext, payment: parser.payment)
 
         let style = AdyenAppearanceLoader.findStyle()?.actionComponent ?? .init()
-        actionHandler = AdyenActionComponent(apiContext: apiContext, style: style)
+        actionHandler = AdyenActionComponent(context: adyenContext)
         actionHandler?.delegate = self
         actionHandler?.presentationDelegate = self
 
-        let component = InstantPaymentComponent(paymentMethod: paymentMethod, paymentData: nil, apiContext: apiContext)
-        component.payment = parser.payment
+        
+        let component = InstantPaymentComponent(paymentMethod: paymentMethod, context: adyenContext, order: nil)
         component.delegate = self
         currentComponent = component
         
