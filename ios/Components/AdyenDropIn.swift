@@ -48,6 +48,7 @@ final internal class AdyenDropIn: BaseModule {
 
         let config = DropInConfigurationParser(configuration: configuration).configuration
         
+        // card config
         let cardConfig = CardConfigurationParser(configuration: configuration).configuration
         config.card.allowedCardTypes = cardConfig.allowedCardTypes
         config.card.billingAddress = cardConfig.billingAddress
@@ -59,6 +60,7 @@ final internal class AdyenDropIn: BaseModule {
         config.card.socialSecurityNumberMode = cardConfig.socialSecurityNumberMode
         config.card.stored = cardConfig.stored
 
+        // applepay config
         let applePayConfig: Adyen.ApplePayComponent.Configuration
         do {
             applePayConfig = try ApplepayConfigurationParser(configuration: configuration).buildConfiguration(amount: parser.payment!.amount, countryCode: parser.countryCode!)
@@ -67,6 +69,18 @@ final internal class AdyenDropIn: BaseModule {
         }
         
         config.applePay?.allowOnboarding = applePayConfig.allowOnboarding
+        config.applePay?.allowShippingContactEditing = applePayConfig.allowShippingContactEditing
+        config.applePay?.supportsCouponCode = applePayConfig.supportsCouponCode
+        config.applePay?.billingContact = applePayConfig.billingContact
+        config.applePay?.couponCode = applePayConfig.couponCode
+        config.applePay?.applicationData = applePayConfig.applicationData
+        config.applePay?.requiredBillingContactFields = applePayConfig.requiredBillingContactFields
+        config.applePay?.requiredShippingContactFields = applePayConfig.requiredShippingContactFields
+        config.applePay?.shippingContact = applePayConfig.shippingContact
+        config.applePay?.shippingMethods = applePayConfig.shippingMethods
+        config.applePay?.shippingType = applePayConfig.shippingType
+        config.applePay?.supportedCountries = applePayConfig.supportedCountries
+        
         
         
         let adyenContext = AdyenContext(apiContext: apiContext, payment: parser.payment)
