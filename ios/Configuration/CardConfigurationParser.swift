@@ -79,7 +79,6 @@ public struct CardConfigurationParser {
                       showsSecurityCodeField: showsSecurityCodeField,
                       koreanAuthenticationMode: kcpVisibility,
                       socialSecurityNumberMode: socialSecurityVisibility,
-                      billingAddressMode: addressVisibility,
                       storedCardConfiguration: storedConfiguration,
                       allowedCardTypes: allowedCardTypes)
     }

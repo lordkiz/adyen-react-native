@@ -28,6 +28,10 @@ public struct RootConfigurationParser {
     public var clientKey: String? {
         return configuration[Keys.clientKey] as? String
     }
+    
+    public var countryCode: String? {
+        return configuration[Keys.countryCode] as? String
+    }
 
     public var amount: Amount? {
         guard let paymentObject = configuration[Keys.amount] as? [String: Any],

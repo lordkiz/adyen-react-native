@@ -24,6 +24,9 @@ final internal class ApplePayComponent: BaseModule {
     func open(_ paymentMethodsDict: NSDictionary, configuration: NSDictionary) {
         let parser = RootConfigurationParser(configuration: configuration)
         let applePayParser = ApplepayConfigurationParser(configuration: configuration)
+        if (parser.countryCode == nil) {
+            return sendEvent(error: NSError(domain: "", code: 400))
+        }
         let paymentMethod: ApplePayPaymentMethod
         let clientKey: String
         let payment: Payment
@@ -32,19 +35,26 @@ final internal class ApplePayComponent: BaseModule {
             paymentMethod = try parsePaymentMethod(from: paymentMethodsDict, for: ApplePayPaymentMethod.self)
             clientKey = try fetchClientKey(from: parser)
             payment = try fetchPayment(from: parser)
-            applepayConfig = try applePayParser.buildConfiguration(amount: payment.amount)
+            applepayConfig = try applePayParser.buildConfiguration(amount: payment.amount, countryCode: parser.countryCode!)
         } catch {
             return sendEvent(error: error)
         }
         
 
-        let apiContext = APIContext(environment: parser.environment, clientKey: clientKey)
+        let apiContext: APIContext
+        do {
+            apiContext = try APIContext(environment: parser.environment, clientKey: clientKey)
+        } catch {
+            return sendEvent(error: error)
+        }
+        
+        let adyenContext = AdyenContext(apiContext: apiContext, payment: payment)
+        
         let applePayComponent: Adyen.ApplePayComponent
         do {
             applePayComponent = try Adyen.ApplePayComponent(paymentMethod: paymentMethod,
-                                                        apiContext: apiContext,
-                                                        payment: payment,
-                                                        configuration: applepayConfig)
+                                                            context: adyenContext,
+                                                            configuration: applepayConfig)
         } catch {
             return sendEvent(error: error)
         }
